@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frequency Oasis</title>
+<meta name="description" content="Frequency Oasis — personal music vault player. Built for Frequency Oasis by Smokey Eye Beats.">
+<meta name="theme-color" content="#c9a84c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FO Player">
+
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="512x512" href="./icons/icon-512.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Inconsolata:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./css/player.css">
+</head>
+<body>
+
+<div id="playerApp">
+  <div class="fp">
+    <div class="fp-nav">
+      <div class="fp-logo">Frequency <em>Oasis</em></div>
+      <div class="fp-navtabs">
+        <div class="nt on" id="nt-player" onclick="nav('player')">Player</div>
+        <div class="nt" id="nt-library" onclick="nav('library')">Library</div>
+        <div class="nt" id="nt-eq" onclick="nav('eq')">EQ</div>
+        <div class="nt" id="nt-settings" onclick="nav('settings')">Settings</div>
+      </div>
+      <div class="fp-user" id="userArea"></div>
+    </div>
+
+    <div class="fp-body">
+      <div class="fp-left">
+        <div class="fp-ql">Queue <span id="qcount"></span></div>
+        <div class="fp-queue" id="queueEl"></div>
+        <div class="fp-storagewrap">
+          <div class="fp-stlbl">Vault</div>
+          <div class="fp-stbar-bg"><div class="fp-stbar" id="stbar" style="width:0%"></div></div>
+          <div class="fp-sttext" id="sttext">0 tracks</div>
+        </div>
+      </div>
+
+      <div class="fp-main">
+        <div id="view-player">
+          <div class="fp-toprow">
+            <div class="fp-art">
+              <img id="artImg" src="" alt="" style="width:100%;height:100%;object-fit:cover;display:none">
+              <div class="fp-vinyl" id="vinyl">
+                <div class="fp-dot"></div>
+              </div>
+            </div>
+            <div class="fp-meta">
+              <div class="fp-track" id="nowTitle">No track loaded</div>
+              <div class="fp-artist" id="nowArtist">Drop files or paste a direct MP3 URL</div>
+              <div class="fp-badge"><i class="ti ti-radio" aria-hidden="true"></i> <span id="srcText">—</span></div>
+              <div class="fp-tag-row" id="tagRow">
+                <div class="fp-tag" data-tag="ambient">ambient</div>
+                <div class="fp-tag" data-tag="neo-soul">neo-soul</div>
+                <div class="fp-tag" data-tag="drill">drill</div>
+                <div class="fp-tag" data-tag="original">original</div>
+                <div class="fp-tag" data-tag="beat">beat</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="fp-vismodes" id="visModes">
+            <button class="vmb sel" data-vm="bars" onclick="setVisMode('bars')">Bars</button>
+            <button class="vmb" data-vm="circular" onclick="setVisMode('circular')">Circular</button>
+            <button class="vmb" data-vm="scope" onclick="setVisMode('scope')">Scope</button>
+            <button class="vmb" data-vm="ring" onclick="setVisMode('ring')">Vinyl Ring</button>
+          </div>
+          <div class="fp-waverow" id="waveRow" onclick="seekClick(event)">
+            <canvas id="wc" height="44"></canvas>
+          </div>
+          <div class="fp-times"><span id="tc">0:00</span><span id="td">0:00</span></div>
+
+          <div class="fp-ctrls">
+            <button class="cb" id="btnShuffle" onclick="toggleShuffle()" title="Shuffle" aria-label="Shuffle"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i></button>
+            <button class="cb" onclick="prevTrack()" aria-label="Previous"><i class="ti ti-player-skip-back" aria-hidden="true"></i></button>
+            <button class="cb primary" id="btnPlay" onclick="togglePlay()" aria-label="Play/Pause"><i class="ti ti-player-play" aria-hidden="true" id="playIco"></i></button>
+            <button class="cb" onclick="nextTrack()" aria-label="Next"><i class="ti ti-player-skip-forward" aria-hidden="true"></i></button>
+            <button class="cb" id="btnRepeat" onclick="cycleRepeat()" title="Repeat" aria-label="Repeat"><i class="ti ti-repeat" aria-hidden="true" id="repIco"></i></button>
+            <button class="cb" onclick="likeTrack()" aria-label="Like" title="Like"><i class="ti ti-heart" aria-hidden="true" id="heartIco"></i></button>
+            <button class="cb" onclick="saveToVault()" title="Store in vault" aria-label="Store in vault"><i class="ti ti-database" aria-hidden="true"></i></button>
+          </div>
+
+          <div class="fp-vol">
+            <span class="fp-volico"><i class="ti ti-volume" aria-hidden="true"></i></span>
+            <input type="range" class="gr" id="volSl" min="0" max="100" value="80" step="1" oninput="setVol(this.value)" aria-label="Volume">
+            <span class="fp-vval" id="volVal">80</span>
+          </div>
+
+          <div class="fp-section">
+            <div class="fp-slbl">Add track</div>
+            <div class="fp-addrow">
+              <input class="fi" id="urlIn" placeholder="Paste direct MP3 URL…" onkeydown="if(event.key==='Enter')resolveAndAdd()">
+              <button class="fb" onclick="resolveAndAdd()" id="addBtn">+ Add</button>
+            </div>
+            <div class="fp-addrow">
+              <input class="fi" id="titleIn" placeholder="Track title (optional)">
+              <input class="fi" id="artistIn" placeholder="Artist" style="flex:.55">
+            </div>
+            <div class="fp-addrow">
+              <input type="file" id="fileIn" accept="audio/*" multiple style="display:none" onchange="addFile(this)">
+              <button class="fb" style="flex:1" onclick="document.getElementById('fileIn').click()"><i class="ti ti-upload" aria-hidden="true"></i> Load files</button>
+              <button class="fb ghost" onclick="clearAll()">Clear queue</button>
+            </div>
+            <div id="resolveStatus" style="font-size:10px;color:rgba(201,168,76,.4);min-height:16px;margin-top:4px;letter-spacing:.05em"></div>
+          </div>
+        </div>
+
+        <div id="view-library" style="display:none">
+          <div class="fp-slbl" style="margin-bottom:10px">Vault — saved tracks</div>
+          <div class="fp-libfilters" id="libFilters">
+            <button class="lfb sel" data-lf="all" onclick="setLibFilter('all')">All</button>
+            <button class="lfb" data-lf="fav" onclick="setLibFilter('fav')">Favorites</button>
+            <button class="lfb" data-lf="recent" onclick="setLibFilter('recent')">Recently played</button>
+          </div>
+          <input class="fi" id="libSearch" placeholder="Search vault…" oninput="renderLib()" style="width:100%;margin:10px 0">
+          <div id="libEl"><div style="font-size:11px;color:rgba(201,168,76,.25)">Nothing saved yet.</div></div>
+        </div>
+
+        <div id="view-eq" style="display:none">
+          <div class="fp-slbl">Sound modes</div>
+          <div class="fp-addrow" style="flex-wrap:wrap;gap:5px;margin-bottom:18px">
+            <button class="fb sm" data-sm="flat" onclick="soundMode('flat')">Flat</button>
+            <button class="fb sm" data-sm="studio" onclick="soundMode('studio')">Studio Reference</button>
+            <button class="fb sm" data-sm="goldroom" onclick="soundMode('goldroom')">Gold Room</button>
+            <button class="fb sm" data-sm="midnight" onclick="soundMode('midnight')">Midnight</button>
+            <button class="fb sm" data-sm="chaos" onclick="soundMode('chaos')">Chaos</button>
+            <button class="fb sm" data-sm="vinylritual" onclick="soundMode('vinylritual')">Vinyl Ritual</button>
+            <button class="fb sm" data-sm="traumaroom" onclick="soundMode('traumaroom')">Trauma Room</button>
+          </div>
+
+          <div class="fp-slbl">10-band equaliser</div>
+          <div class="fp-eq-bands" id="eqBands"></div>
+          <div class="fp-addrow" style="margin-top:10px;gap:6px">
+            <button class="fb" onclick="saveEqPreset()">Save preset</button>
+            <button class="fb" onclick="exportEqPreset()">Export</button>
+            <button class="fb" onclick="document.getElementById('eqImportIn').click()">Import</button>
+            <input type="file" id="eqImportIn" accept="application/json" style="display:none" onchange="importEqPreset(this)">
+          </div>
+          <div id="eqPresetList" class="fp-addrow" style="flex-wrap:wrap;gap:5px;margin-top:8px"></div>
+
+          <div style="margin-top:16px">
+            <div class="fp-slbl">Playback speed</div>
+            <div class="fp-vol" style="margin-bottom:0">
+              <input type="range" class="gr" id="speedSl" min="50" max="200" value="100" step="5" oninput="setSpeed(this.value)" style="flex:1" aria-label="Speed">
+              <span class="fp-vval" id="speedVal">1.0×</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="view-settings" style="display:none">
+          <div class="fp-slbl">Playback</div>
+          <div class="fp-fr">
+            <span class="fp-fn">Reduced motion</span>
+            <div class="tog" id="tog-rm" onclick="togFeat('rm')" role="switch" aria-checked="false"></div>
+          </div>
+
+          <div class="fp-slbl" style="margin-top:18px">Vault storage</div>
+          <div class="fp-sttext" id="storageDetail" style="margin-bottom:10px">—</div>
+          <div class="fp-addrow" style="gap:6px">
+            <button class="fb" onclick="exportVault()">Export vault (JSON)</button>
+            <button class="fb" onclick="document.getElementById('vaultImportIn').click()">Import vault</button>
+            <input type="file" id="vaultImportIn" accept="application/json" style="display:none" onchange="importVault(this)">
+          </div>
+          <div class="fp-addrow" style="margin-top:6px">
+            <button class="fb ghost" onclick="resetEverything()">Reset everything</button>
+          </div>
+          <div id="settingsStatus" style="font-size:10px;color:rgba(201,168,76,.4);min-height:16px;margin-top:6px"></div>
+        </div>
+      </div>
+
+      <div class="fp-right">
+        <div class="fp-rlbl">Controls</div>
+        <div class="fp-fr">
+          <span class="fp-fn">Visualiser</span>
+          <div class="tog on" id="tog-vis" onclick="togFeat('vis')" role="switch" aria-checked="true"></div>
+        </div>
+        <div class="fp-fr">
+          <span class="fp-fn">Auto-gain</span>
+          <div class="tog on" id="tog-ag" onclick="togFeat('ag')" role="switch" aria-checked="true"></div>
+        </div>
+        <div class="fp-fr">
+          <span class="fp-fn">Crossfade</span>
+          <div class="tog" id="tog-cf" onclick="togFeat('cf')" role="switch" aria-checked="false"></div>
+        </div>
+        <div class="fp-fr">
+          <span class="fp-fn">Sleep timer</span>
+          <div class="tog" id="tog-sl" onclick="togFeat('sl')" role="switch" aria-checked="false"></div>
+        </div>
+        <div id="sleepRow" style="display:none;padding:7px 0;border-bottom:0.5px solid var(--bd)">
+          <input type="range" class="gr" id="sleepSl" min="5" max="120" value="30" step="5" oninput="upSleep(this.value)" style="width:100%">
+          <div style="font-size:9px;color:rgba(201,168,76,.3);margin-top:3px">Off in <span id="sleepV">30</span> min</div>
+        </div>
+        <div class="fp-repsec">
+          <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(201,168,76,.3);margin-bottom:6px">Repeat</div>
+          <div class="fp-reprow">
+            <button class="fp-repbtn sel" id="rb-off" onclick="setRepeat('off')">Off</button>
+            <button class="fp-repbtn" id="rb-one" onclick="setRepeat('one')">One</button>
+            <button class="fp-repbtn" id="rb-all" onclick="setRepeat('all')">All</button>
+            <button class="fp-repbtn" id="rb-ab" onclick="setRepeat('ab')">A–B</button>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="fp-rlbl">Saved</div>
+          <div id="savedEl"><div style="font-size:10px;color:rgba(201,168,76,.2)">None yet</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fp-ticker" id="ticker">Frequency Oasis · frequencyoasis.gumroad.com · 504k+ Pixabay plays · 57+ products · Gold Room Ritual — Bandcamp · Smokey Eye Beats · ——&nbsp;&nbsp;&nbsp;&nbsp;Frequency Oasis · frequencyoasis.gumroad.com · 504k+ Pixabay plays · 57+ products · Gold Room Ritual — Bandcamp · Smokey Eye Beats · ——</div>
+  </div>
+</div>
+
+<audio id="aud" crossorigin="anonymous"></audio>
+<audio id="aud2" crossorigin="anonymous"></audio>
+
+<script src="./js/player.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+</body>
+</html>
